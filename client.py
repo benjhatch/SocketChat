@@ -3,26 +3,28 @@ import threading
 import pickle
 import time
 import pygame as pg
+from message import Message
 
 class Client:
     def __init__(self, host, user, to):
+        self.run = True
         self.host = host
         self.user = user
         self.to = to
-        self.count = 0
-        self.run = True
-        pg.init()
-        self.myFont = pg.font.SysFont('Comic Sans MS', 25)
-        pg.font.init()
-        self.screen = pg.display.set_mode((500, 500))
         self.allMessages = {}
         self.allSentMessages = []
+        self.count = 0
+
         self.s = socket.socket()
         self.port = 8080
-
         self.s.connect((self.host, self.port))
         self.s.send(pickle.dumps(self.user))
         print("Connected to server")
+
+        pg.init()
+        pg.font.init()
+        self.screen = pg.display.set_mode((500, 500))
+        self.myFont = pg.font.SysFont('Comic Sans MS', 25)
 
         self.print_lock = threading.Lock()
         self.startThreads()
@@ -36,30 +38,23 @@ class Client:
         while self.run:
             msg = self.s.recv(1025)
             msg = pickle.loads(msg)
-            if msg[0] in self.allMessages:
-                self.allMessages[msg[0]].append(msg)
+            if msg.sender in self.allMessages:
+                self.allMessages[msg.sender].append(msg)
             else:
-                self.allMessages[msg[0]] = [msg]
-            self.displayMsg(msg[1])
+                self.allMessages[msg.sender] = [msg]
+            msg.display(self.screen, self.myFont, self.count)
+            self.count += 1
 
     def sendMsg(self):
-        msg = input("Message: ")
-        data = (self.to, msg, self.user)
-        self.s.send(pickle.dumps(data))
-        self.displayMsg(msg,(255,0,0))
+        message = input("Message: ")
+        msg = Message(self.to, message, self.user)
+        self.s.send(pickle.dumps(msg))
         self.allSentMessages.append(msg)
-        pg.display.update()
-
-    def displayMsg(self, msg, color=(255,255,255)):
-        message = self.myFont.render(msg, True, color)
-        self.screen.blit(message, (10, 50 + (20 * self.count)))
+        msg.display(self.screen, self.myFont, self.count, (255, 0, 0))
         self.count += 1
-        pg.display.update()
 
     def runClient(self):
         self.screen.fill((0,0,0))
-        name = self.myFont.render(self.to, True, (255, 255, 255))
-        self.screen.blit(name, (250, 5))
         while self.run:
             for event in pg.event.get():
                 if event.type == pg.QUIT:

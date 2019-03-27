@@ -2,6 +2,7 @@ import socket
 import threading
 from queue import Queue
 import pickle
+from message import Message
 
 class ChatServer:
     def __init__(self):
@@ -35,7 +36,7 @@ class ChatServer:
             self.s.listen(0)
             conn, addr = self.s.accept()
             print(addr, "has connected to the server")
-            self.s.setblocking(1)
+            self.s.setblocking(True)
 
             name = pickle.loads(conn.recv(1024))
             self.connections[name] = conn
@@ -59,17 +60,14 @@ class ChatServer:
             msg = pickle.loads(msg)
             self.redirectMsg(msg)
 
-    def redirectMsg(self,data):
-        to = data[0]
-        msg = data[1]
-        sender = data[2]
-        if to in self.connections:
-            conn = self.connections[to]
-            newMsg = (sender,msg)
-            conn.send(pickle.dumps(newMsg))
+    def redirectMsg(self,msg):
+        if msg.to in self.connections:
+            conn = self.connections[msg.to]
+            conn.send(pickle.dumps(msg))
         else:
-            conn = self.connections[sender]
-            conn.send(pickle.dumps((to,"WARNING: not in the server directory")))
+            conn = self.connections[msg.sender]
+            newMsg = Message(msg.sender, "WARNING: not in the server directory", "SERVER")
+            conn.send(pickle.dumps(newMsg))
 
     def resetConnections(self):
         for conn in self.connections.values():
