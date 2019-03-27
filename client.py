@@ -16,7 +16,7 @@ class Client:
         pg.font.init()
         self.screen = pg.display.set_mode((500, 500))
         self.allMessages = {}
-        self.allSentMessages = {}
+        self.allSentMessages = []
         self.s = socket.socket()
         self.port = 8080
 
@@ -46,11 +46,12 @@ class Client:
         msg = input("Message: ")
         data = (self.to, msg, self.user)
         self.s.send(pickle.dumps(data))
-        self.displayMsg(msg)
+        self.displayMsg(msg,(255,0,0))
+        self.allSentMessages.append(msg)
         pg.display.update()
 
-    def displayMsg(self,msg):
-        message = self.myFont.render(msg, True, (255, 255, 255))
+    def displayMsg(self, msg, color=(255,255,255)):
+        message = self.myFont.render(msg, True, color)
         self.screen.blit(message, (10, 50 + (20 * self.count)))
         self.count += 1
         pg.display.update()
@@ -68,6 +69,8 @@ class Client:
                         self.to = input('Enter who you want to send a message to: ')
                     if event.key == pg.K_m:
                         self.sendMsg()
+                    if event.key == pg.K_p:
+                        print(self.allMessages)
             time.sleep(0.5)
 
 client = Client(input("Server ip: "), input("Enter username: "), input("Message to: "))
