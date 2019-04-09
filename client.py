@@ -9,7 +9,7 @@ from message import Message
 class Client:
     def __init__(self, host, user, to):
         self.run = True
-        self.myContacts = {}
+        pg.init()
 
         self.host = host
         self.user = user
@@ -23,7 +23,7 @@ class Client:
         self.print_lock = threading.Lock()
 
         self.screen = pg.display.set_mode((500, 500))
-        pg.init()
+        self.myContacts = {self.to: Window(self.to, self.screen)}
 
         self.startThreads()
         self.runClient()
