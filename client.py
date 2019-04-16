@@ -43,27 +43,27 @@ class Client:
                 self.myContacts[msg.sender].handleNewMsg(msg)
             self.myContacts[msg.sender].updateWindow()
 
-    def sendMsg(self):
+    def sendMsg(self, message):
         if self.to in self.myContacts:
-            message = input("Message: ")
             msg = Message(self.to, message, self.user)
             self.s.send(pickle.dumps(msg))
             self.myContacts[self.to].handleNewMsg(msg, True)
+            self.myContacts[self.to].refreshBox()
             self.myContacts[self.to].updateWindow()
         else:
             self.myContacts[self.to] = Window(self.to, self.screen)
-            self.sendMsg()
+            self.sendMsg(message)
 
     def runClient(self):
         while self.run:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.run = False
-                elif event.type == pg.KEYDOWN:
-                    if event.key == pg.K_x:
-                        self.to = input('Enter who you want to send a message to: ')
-                    if event.key == pg.K_m:
-                        self.sendMsg()
-            time.sleep(0.5)
+                    pg.quit()
+                if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                    self.sendMsg(self.myContacts[self.to].textbox.text)
+                    self.myContacts[self.to].textbox.text = ""
+                else:
+                    self.myContacts[self.to].handleEvent(event)
 
 client = Client(input("Server ip: "), input("Enter username: "), input("Message to: "))

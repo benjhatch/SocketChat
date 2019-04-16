@@ -1,4 +1,6 @@
 import pygame as pg
+from textbox import Textbox
+
 class Window:
     def __init__(self, contact, screen):
 
@@ -6,13 +8,20 @@ class Window:
         self.sentMessages = {}
         self.order = 0
 
-        self.headerFont = pg.font.SysFont('Arial', 25)
-        self.textFont = pg.font.SysFont('Arial', 18)
+        self.headerFont = pg.font.SysFont('Arial', 40)
+        self.textFont = pg.font.SysFont('Arial', 30)
         self.screen = screen
         self.contact = self.headerFont.render(contact, True, (0, 0, 0))
+        self.textbox = Textbox(screen)
 
         self.length, self.height = self.headerFont.size(contact)
         self.updateWindow()
+
+    def handleEvent(self,event):
+        if event.type == pg.MOUSEBUTTONDOWN:
+            self.textbox.handleClick()
+        if event.type == pg.KEYDOWN:
+            self.textbox.handleKeydown(event)
 
     def displayHeader(self):
         pg.draw.rect(self.screen, (236, 240, 244), (0, 0, 500, self.height*3))
@@ -26,6 +35,7 @@ class Window:
                 self.displayMessage(self.sentMessages[i], i, True, (51, 153, 255))
             else:
                 self.displayMessage(self.myMessages[i], i, False, (236, 240, 244))
+        self.textbox.updateBox()
         pg.display.update()
 
     def displayMessage(self, msg, index, sent, color):
@@ -35,9 +45,8 @@ class Window:
         msg = self.textFont.render(msg.msg, True, (0, 0, 0))
         if sent:
             x = 490-length
-        pg.draw.rect(self.screen, color, (x-2.5, y+self.height*3, length+5, height))
-        self.screen.blit(msg, (x, y+self.height*3))
-        pg.display.update()
+        pg.draw.rect(self.screen, color, (x-2.5, y+self.height*3+2, length+5, height))
+        self.screen.blit(msg, (x, y+self.height*3+2))
 
     def handleNewMsg(self, msg, sent=False):
         if sent:
@@ -45,3 +54,6 @@ class Window:
         else:
             self.myMessages[self.order] = msg
         self.order += 1
+
+    def refreshBox(self):
+        self.textbox.reset()
