@@ -3,6 +3,9 @@ import pygame as pg
 class Textbox:
     def __init__(self, screen, height=25):
         self.text = ""
+        self.lines = []
+        self.currentIndex = 0
+
         self.active = False
         self.screen = screen
         self.height = height
@@ -12,21 +15,29 @@ class Textbox:
         pg.draw.rect(self.screen, (0, 0, 0), (0, 500-self.height, self.screenWidth, self.height))
 
     def updateBox(self):
-        self.handleMessageSize()
-        msg = self.font.render(self.text, True, (0, 0, 0))
         pg.draw.rect(self.screen, (242, 242, 242), (0, 500-self.height, self.screenWidth, self.height))
-        self.screen.blit(msg, (0, self.screenHeight - self.height))
+        self.showText()
 
 
-    def handleMessageSize(self):
-        pass
-        """
-        for i in range(1, len(self.text)):
-            if i % 30 == 0:
-                self.text = self.text[:i] + "\n" + self.text[i:]
-                self.height += 25
-        self.text.replace("\n", "")
-        """
+    def showText(self):
+        self.handleText()
+        for i in range(len(self.lines)):
+            lineText = self.font.render(self.lines[i].text, True, (0, 0, 0))
+            self.screen.blit(lineText, (0, self.lines[i].pos))
+            if not self.lines[i].complete:
+                self.lines.pop(i)
+
+    def handleText(self):
+        for i in range(self.currentIndex, len(self.text)):
+            textLength, textHeight = self.font.size(self.text[self.currentIndex:i])
+            if textLength >= self.screenWidth:
+                self.height += textHeight
+                self.lines.append(Line(self.text[self.currentIndex:i], self.screenHeight - textHeight))
+                self.currentIndex = i
+                for line in self.lines:
+                    line.updatePos(textHeight)
+        self.lines.append(Line(self.text[self.currentIndex:len(self.text)], self.screenHeight - 25, False))
+
 
     def handleKeydown(self, event):
         if self.active:
@@ -46,6 +57,18 @@ class Textbox:
 
     def reset(self):
         self.text = ""
-        self.height = 30
+        self.currentIndex = 0
         self.active = False
         self.updateBox()
+
+class Line:
+    def __init__(self, text, pos, complete = True):
+        self.text = text
+        self.pos = pos
+        self.complete = complete
+
+    def addChar(self, char):
+        self.text += char
+
+    def updatePos(self, unit):
+        self.pos -= unit
